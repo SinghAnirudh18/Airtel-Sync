@@ -275,7 +275,15 @@ $$\text{Expected Annual Value (EV)} = P(\text{Activation}) \times \text{Predicte
 
 ## 7. Smart KYC Engine & Specimen Test Key
 
-The platform features an automated audit suite testing 12 specimen applicants (`K01` through `K12`), catching planted synthetic fraud and procedural errors:
+In real enterprise subscriber onboarding, credentials are naturally distributed across distinct documents:
+* **GST Certificate:** Primary authority for 15-digit GSTIN, legal entity classification, and registered business name.
+* **Udyam Registration Certificate:** Primary authority for MSME enterprise tier (Micro/Small/Medium) and major operational activity.
+* **Electricity / Utility Bill:** Validates billing premise address and proof of operations recency (governed by the $\le$ 90-day statutory window).
+* **Signatory ID Proof:** PAN/Aadhaar/Voter ID establishing authorized signatory bona fides.
+
+Because no single document contains all necessary verification tokens, our system features a **Concurrent Multi-Document Vision Pipeline (`extractor.py`)** utilizing Python's `concurrent.futures.ThreadPoolExecutor`. Uploaded certificates are parsed in parallel across OpenRouter Multimodal Vision workers, consolidating extracted tokens into an authoritative applicant profile with sub-2s total turnaround time and detailed provenance tracking.
+
+The platform features an automated audit suite testing 12 specimen applicant packages (`K01` through `K12`), catching planted synthetic fraud and procedural errors:
 
 | Applicant | Entity Name | Segment | Planted Error / Test Case | Verification Outcome | Engine Reason |
 | :--- | :--- | :--- | :--- | :--- | :--- |

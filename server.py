@@ -37,6 +37,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from extractor import extract_kyc_with_openrouter, process_applicant_openrouter, extract_multiple_kyc_documents_parallel
+
 # OpenRouter Client
 ai_client = OpenAI(
     base_url=OPENROUTER_BASE_URL,
@@ -631,43 +633,47 @@ async def upload_and_verify(
     udyam: Optional[str] = Form(None),
     bill_date: Optional[str] = Form(None),
     business_name: Optional[str] = Form(None),
+    files: Optional[List[UploadFile]] = File(None),
     file: Optional[UploadFile] = File(None)
 ):
     extracted_gstin = gstin
     extracted_udyam = udyam
     extracted_bill_date = bill_date
 
-    # If an image file was uploaded, run Vision OCR through OpenRouter
+    # Consolidate multiple or single uploaded files
+    all_uploads: List[UploadFile] = []
+    if files:
+        all_uploads.extend(files)
     if file:
-        try:
-            contents = await file.read()
-            b64 = base64.b64encode(contents).decode('utf-8')
-            prompt = """Analyze this uploaded KYC document. Extract:
-            1. 'gstin': 15-char alphanumeric GSTIN if present, else null
-            2. 'udyam': Udyam registration number if present, else null
-            3. 'bill_date': Utility bill date in YYYY-MM-DD if present, else null
-            4. 'entity_name': Business/legal name if present, else null
-            Return strictly a JSON object: {"gstin": ..., "udyam": ..., "bill_date": ..., "entity_name": ...}"""
+        all_uploads.append(file)
 
-            res = ai_client.chat.completions.create(
-                model="openrouter/free",
-                messages=[{
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}}
-                    ]
-                }],
-                temperature=0.0
-            )
-            raw = res.choices[0].message.content.replace('```json', '').replace('```', '').strip()
-            parsed = json.loads(raw)
-            if parsed.get('gstin'): extracted_gstin = parsed['gstin']
-            if parsed.get('udyam'): extracted_udyam = parsed['udyam']
-            if parsed.get('bill_date'): extracted_bill_date = parsed['bill_date']
-            if parsed.get('entity_name') and not business_name: business_name = parsed['entity_name']
+    extraction_stats = {}
+    if all_uploads:
+        try:
+            # Read files into (filename, bytes) items for concurrent worker pool
+            doc_items = []
+            for up in all_uploads:
+                contents = await up.read()
+                doc_items.append((up.filename, contents))
+
+            res = extract_multiple_kyc_documents_parallel(doc_items, max_workers=min(len(doc_items), 6))
+            extracted_data = res.get('aggregated', {})
+            extraction_stats = {
+                'files_processed': res.get('files_processed', len(doc_items)),
+                'elapsed_seconds': res.get('elapsed_seconds', 0.0),
+                'file_details': res.get('file_details', [])
+            }
+
+            if extracted_data.get('gstin') and not extracted_gstin:
+                extracted_gstin = extracted_data['gstin']
+            if extracted_data.get('udyam') and not extracted_udyam:
+                extracted_udyam = extracted_data['udyam']
+            if extracted_data.get('bill_date') and not extracted_bill_date:
+                extracted_bill_date = extracted_data['bill_date']
+            if extracted_data.get('business_name') and not business_name:
+                business_name = extracted_data['business_name']
         except Exception as e:
-            print(f"OCR Vision extraction fallback: {e}")
+            print(f"Extractor parallel error: {e}")
 
     audit = run_kyc_audit(
         gstin_val=extracted_gstin,
@@ -681,6 +687,7 @@ async def upload_and_verify(
         'bill_date': extracted_bill_date,
         'business_name': business_name
     }
+    audit['extraction_stats'] = extraction_stats
     return audit
 
 # -----------------------------------------------------------------------------

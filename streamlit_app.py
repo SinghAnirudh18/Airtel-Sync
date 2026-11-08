@@ -8,6 +8,12 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 from dotenv import load_dotenv
+from extractor import (
+    extract_kyc_with_openrouter,
+    encode_image_to_base64,
+    extract_multiple_kyc_documents_parallel,
+    process_applicant_openrouter
+)
 
 load_dotenv()
 
@@ -671,32 +677,169 @@ elif menu == "📊 2. Live Lead Propensity & EV Engine":
 # -----------------------------------------------------------------------------
 elif menu == "🛡️ 3. Smart KYC & DPDP Compliance":
     st.title("🛡️ Smart Instant KYC & DPDP Compliance Auditor")
-    st.markdown("Sub-60s automated verification with **Mod-36 checksum**, **National GST & Udyam Registries**, and **DPDP Act data masking**.")
+    st.markdown("Sub-60s automated verification with **OpenRouter Multimodal Vision (`extractor.py`)**, **Mod-36 checksum**, **National GST & Udyam Registries**, and **DPDP Act data masking**.")
 
     # DPDP Banner
     st.success("🔒 **DPDP Act, 2023 Digital Consent Enforced:** Purpose limitation strictly bounded to telecom subscriber verification. All sensitive tax tokens masked (`37XXXXXXXXX1ZS`). Specimen documents scheduled for statutory purge 30 days post-activation.")
 
+    # Section A: Parallel Multi-Document Vision Extraction powered by extractor.py
+    st.subheader("1. Parallel Multi-Document Vision Pipeline (`extractor.py`)")
+    st.markdown(
+        "Real-world enterprise KYC distributes credentials across distinct documents: **GST Certificate** (GSTIN & Trade Name), "
+        "**Udyam Certificate** (MSME Reg No), **Utility Bill** (Address & Recency Proof), and **Signatory ID** (Authorized Identity). "
+        "No single document holds all attributes. `extractor.py` utilizes **`concurrent.futures.ThreadPoolExecutor`** to process all submitted "
+        "documents in parallel, consolidating extracted tokens into an authoritative applicant profile."
+    )
+
+    doc_source_mode = st.radio(
+        "Choose Document Submission Method:",
+        [
+            "📂 Multi-Document Specimen Dossier (K01–K12 Complete Packages)",
+            "📤 Upload Multiple Custom Documents (GST + Udyam + Utility Bill + Signatory ID)"
+        ],
+        horizontal=True
+    )
+
+    docs_to_process = []  # List of items: either file paths or (filename, bytes/UploadedFile)
+
+    if doc_source_mode == "📂 Multi-Document Specimen Dossier (K01–K12 Complete Packages)":
+        dossier_options = [
+            ("K02", "K02: Harmony Dental Care (Clean Approved Package · 4 Docs)"),
+            ("K01", "K01: Vindhya Tours & Travels (Cancelled GSTIN + Expired 2024 Bill · 4 Docs)"),
+            ("K03", "K03: Ganesh Woodcraft (Valid Manufacturer · 4 Docs)"),
+            ("K04", "K04: Saffron Dental Care (Planted: GSTIN Mod-36 Mismatch · 4 Docs)"),
+            ("K05", "K05: Metro Retail Store (Non-GST Micro Exemption · 3 Docs)"),
+            ("K06", "K06: Saffron Unisex Salon (Valid Pass · 4 Docs)"),
+            ("K07", "K07: Neelgiri Physio Clinic (Planted: 8-digit Udyam Error · 4 Docs)"),
+            ("K08", "K08: Green Leaf Legal Associates (Valid Pass · 4 Docs)"),
+            ("K09", "K09: Kaveri Insurance Advisors (Valid Pass · 4 Docs)"),
+            ("K10", "K10: Kaveri Stays LLP (Multi-Site Hospitality · 4 Docs)"),
+            ("K11", "K11: Trinity Bake House (Planted: Utility Bill >250 Days Expired · 4 Docs)"),
+            ("K12", "K12: Star Electronics (Planted: Bill Feb 2024 >2 Years Expired · 4 Docs)")
+        ]
+        chosen_k = st.selectbox(
+            "Select Applicant KYC Dossier to Load:",
+            [opt[0] for opt in dossier_options],
+            format_func=lambda x: next(opt[1] for opt in dossier_options if opt[0] == x),
+            index=0
+        )
+
+        if os.path.exists('kyc_documents'):
+            all_files = sorted(os.listdir('kyc_documents'))
+            matching_files = [f for f in all_files if f.startswith(f"{chosen_k}_")]
+            docs_to_process = [os.path.join('kyc_documents', f) for f in matching_files]
+
+            st.markdown(f"**Loaded {len(docs_to_process)} Specimen Documents for `{chosen_k}`:**")
+            preview_cols = st.columns(max(1, len(docs_to_process)))
+            for idx, fpath in enumerate(docs_to_process):
+                base = os.path.basename(fpath)
+                doc_tag = "Document"
+                if "gst" in base: doc_tag = "📜 GSTIN Certificate"
+                elif "udyam" in base: doc_tag = "🏷️ Udyam Registration"
+                elif "address" in base or "bill" in base: doc_tag = "💡 Address Utility Bill"
+                elif "signatory" in base: doc_tag = "🪪 Signatory ID Proof"
+
+                with preview_cols[idx]:
+                    st.image(fpath, caption=f"{doc_tag}\n({base})", use_container_width=True)
+
+    else:
+        uploaded_files = st.file_uploader(
+            "Upload Multiple KYC Document Images (PNG / JPG / JPEG):",
+            type=['png', 'jpg', 'jpeg'],
+            accept_multiple_files=True,
+            help="Select all required applicant proofs (GST Certificate, Udyam MSME Certificate, Recent Electricity/Telephone Bill, Signatory PAN/Aadhaar)."
+        )
+        if uploaded_files:
+            docs_to_process = uploaded_files
+            st.markdown(f"**{len(uploaded_files)} Documents Ready for Concurrency Processing:**")
+            up_cols = st.columns(min(4, max(1, len(uploaded_files))))
+            for idx, ufile in enumerate(uploaded_files):
+                with up_cols[idx % 4]:
+                    st.image(ufile, caption=f"Uploaded: {ufile.name}", use_container_width=True)
+        else:
+            st.info("👆 Please upload 2 or more document files above to trigger parallel multi-document extraction.")
+
+    # Concurrency Execution Trigger
+    st.markdown("<br/>", unsafe_allow_html=True)
+    c_btn, c_stat = st.columns([4, 8])
+    with c_btn:
+        run_parallel_extract = st.button(
+            f"⚡ Run Parallel Multi-Doc Vision OCR ({len(docs_to_process)} Files)",
+            disabled=len(docs_to_process) == 0,
+            use_container_width=True
+        )
+
+    if run_parallel_extract and docs_to_process:
+        with st.spinner(f"⚡ Concurrently extracting tokens across {len(docs_to_process)} documents via ThreadPoolExecutor..."):
+            res = extract_multiple_kyc_documents_parallel(docs_to_process, max_workers=min(len(docs_to_process), 6))
+            st.session_state['extracted_kyc_bundle'] = res
+            st.session_state['extracted_kyc'] = res.get('aggregated', {})
+            st.toast("Parallel Extraction Succeeded!", icon="🚀")
+
+    # Display Consolidated Results & Concurrency Metrics
+    if 'extracted_kyc_bundle' in st.session_state:
+        bundle = st.session_state['extracted_kyc_bundle']
+        agg = bundle.get('aggregated', {})
+        details = bundle.get('file_details', [])
+        elapsed = bundle.get('elapsed_seconds', 0.0)
+        n_files = bundle.get('files_processed', len(details))
+
+        st.success(
+            f"🚀 **Parallel Vision OCR Completed in {elapsed}s!** Concurrently processed {n_files} documents using **`extractor.py` `ThreadPoolExecutor`** "
+            f"({round((elapsed / max(1, n_files)) * 1000, 1)}ms effective latency per document)."
+        )
+
+        # 4 Summary KPI Cards of Aggregated Tokens
+        k_c1, k_c2, k_c3, k_c4 = st.columns(4)
+        k_c1.metric("Extracted Trade Name", agg.get('business_name') or "Not Visible")
+        k_c2.metric("Consolidated GSTIN", agg.get('gstin') or "None / Micro Exemption")
+        k_c3.metric("Udyam Registration", agg.get('udyam') or "None")
+        k_c4.metric("Address Bill Date", agg.get('bill_date') or "Not Detected")
+
+        # Provenance Breakdown Table
+        with st.expander("🔍 View Per-Document Token Provenance & Concurrency Audit Log", expanded=True):
+            prov_rows = []
+            for item in details:
+                f_name = item.get('file_name', 'Unknown')
+                f_ext = item.get('extracted', {})
+                prov_rows.append({
+                    "Document File": f_name,
+                    "Extracted GSTIN": f_ext.get('gstin') or "—",
+                    "Extracted Udyam": f_ext.get('udyam') or "—",
+                    "Extracted Bill Date": f_ext.get('bill_date') or "—",
+                    "Extracted Business Name": f_ext.get('business_name') or "—"
+                })
+            st.dataframe(pd.DataFrame(prov_rows), hide_index=True, use_container_width=True)
+
+    st.markdown("---")
+    st.subheader("2. Compliance Audit & Registry Cross-Check")
+    
     kyc_col1, kyc_col2 = st.columns([5, 7])
 
     with kyc_col1:
-        st.subheader("1. Applicant Document Input")
-        spec_choice = st.selectbox(
-            "Select Specimen Applicant (K01–K12):",
-            list(SPECIMENS.keys()),
-            format_func=lambda k: SPECIMENS[k]['label']
-        )
-        spec = SPECIMENS[spec_choice]
+        st.markdown("**Applicant Credentials (Consolidated from Parallel Extraction):**")
+        
+        # Priority: Parallel extracted bundle > Single extraction > Default specimen
+        last_ext = st.session_state.get('extracted_kyc', {})
+        def_name = last_ext.get('business_name') or "Harmony Dental Care"
+        def_gst = last_ext.get('gstin') or "19EOGXH4115Y1ZL"
+        def_udy = last_ext.get('udyam') or "UDYAM-WB-00-5053330"
+        def_date_str = last_ext.get('bill_date') or "2026-05-22"
+        try:
+            def_date = pd.to_datetime(def_date_str).date()
+        except Exception:
+            def_date = pd.to_datetime("2026-05-22").date()
 
-        k_name = st.text_input("Applicant Trade Name", value=spec['name'])
-        k_gst = st.text_input("15-Digit GSTIN", value=spec['gstin'])
-        k_udy = st.text_input("Udyam Registration Number", value=spec['udyam'])
-        k_bill = st.date_input("Address Proof Utility Bill Date", value=pd.to_datetime(spec['bill_date']).date())
+        k_name = st.text_input("Applicant Trade Name", value=def_name)
+        k_gst = st.text_input("15-Digit GSTIN (Leave blank for Micro Exemption)", value=def_gst)
+        k_udy = st.text_input("Udyam Registration Number", value=def_udy)
+        k_bill = st.date_input("Address Proof Utility Bill Date", value=def_date)
 
-        st.caption("Benchmark Date: `2026-07-15` (Address proof validity window: $\le$ 90 days)")
+        st.caption(r"Benchmark Date: `2026-07-15` (Address proof validity window: $\le$ 90 days)")
         run_kyc_btn = st.button("🔍 Execute Smart KYC Audit", use_container_width=True)
 
     with kyc_col2:
-        st.subheader("2. Algorithmic Verification Report")
+        st.markdown("**Algorithmic Verification Report:**")
         
         audit_res = run_smart_kyc_audit(
             gstin_val=k_gst,
