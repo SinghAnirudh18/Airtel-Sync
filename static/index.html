@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Udyam Digital | Accel Business</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              red: '#E40000',
+              darkRed: '#B30000',
+              dark: '#0F172A',
+              card: '#1E293B',
+              accent: '#38BDF8',
+              emerald: '#10B981',
+              amber: '#F59E0B'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- TOP HEADER -->
+  <header class="bg-slate-900/90 border-b border-slate-800 backdrop-blur sticky top-0 z-50 px-4 lg:px-8 py-3.5 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-red to-orange-500 flex items-center justify-center shadow-lg shadow-red-500/20">
+        <i data-lucide="radio" class="w-5 h-5 text-white"></i>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-extrabold text-lg tracking-tight text-white">Accel Business</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-semibold border border-red-500/30">Project Udyam</span>
+        </div>
+        <p class="text-xs text-slate-400">Making Indian MSMEs go digital in one sitting</p>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="hidden md:flex items-center bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 text-sm">
+      <button onclick="switchTab('advisor')" id="tab-btn-advisor" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition text-white bg-brand-red shadow">1. AI Advisor</button>
+      <button onclick="switchTab('quote')" id="tab-btn-quote" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">2. Quote & Checkout</button>
+      <button onclick="switchTab('kyc')" id="tab-btn-kyc" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">3. Smart KYC</button>
+      <button onclick="switchTab('tracker')" id="tab-btn-tracker" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">4. Order Tracker</button>
+      <button onclick="switchTab('backoffice')" id="tab-btn-backoffice" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white flex items-center space-x-1.5">
+        <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i>
+        <span>5. Sales & EV Engine</span>
+      </button>
+    </nav>
+
+    <!-- Language & Audio Assistant -->
+    <div class="flex items-center space-x-3">
+      <button onclick="toggleVoiceAdvisor()" id="voice-btn" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium border border-slate-700 text-slate-300 transition">
+        <i data-lucide="volume-2" class="w-4 h-4 text-brand-accent"></i>
+        <span id="voice-label">Voice AI: Off</span>
+      </button>
+      <select id="lang-select" onchange="onLanguageChange()" class="bg-slate-800 text-slate-200 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-brand-red">
+        <option value="English">🇬🇧 English</option>
+        <option value="Hindi">🇮🇳 हिंदी (Hindi)</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- MOBILE NAVIGATION BAR -->
+  <div class="md:hidden flex overflow-x-auto bg-slate-900 border-b border-slate-800 p-2 space-x-2 text-xs">
+    <button onclick="switchTab('advisor')" class="px-3 py-1.5 rounded-lg bg-brand-red text-white font-medium shrink-0">1. Advisor</button>
+    <button onclick="switchTab('quote')" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 shrink-0">2. Quote</button>
+    <button onclick="switchTab('kyc')" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 shrink-0">3. KYC</button>
+    <button onclick="switchTab('tracker')" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 shrink-0">4. Tracker</button>
+    <button onclick="switchTab('backoffice')" class="px-3 py-1.5 rounded-lg bg-slate-800 text-emerald-400 shrink-0">5. Sales EV</button>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8">
+
+    <!-- ===================================================================== -->
+    <!-- TAB 1: GENAI ADVISOR -->
+    <!-- ===================================================================== -->
+    <section id="view-advisor" class="tab-view block space-y-8">
+      <!-- Hero Banner -->
+      <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700/60 rounded-2xl p-6 lg:p-8 relative overflow-hidden shadow-2xl">
+        <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="max-w-3xl">
+          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold mb-3">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            <span>Instant Digital Business Onboarding</span>
+          </div>
+          <h1 class="text-2xl lg:text-4xl font-extrabold text-white tracking-tight mb-2">
+            Discover your business bundle in 60 seconds
+          </h1>
+          <p class="text-slate-300 text-sm lg:text-base leading-relaxed">
+            No sales calls. No 5-day PDF quotes. Answer 4 quick questions to get a single transparent monthly bundle with guaranteed installation SLA.
+          </p>
+        </div>
+
+        <!-- 1-Click Fast Presets -->
+        <div class="mt-6 pt-6 border-t border-slate-700/60">
+          <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold block mb-3">Or choose a business scenario to demo:</span>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <button onclick="loadScenario('kirana')" class="p-3 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-xl text-left transition hover:border-red-500/50 group">
+              <div class="text-red-400 group-hover:text-red-300 font-bold text-sm">🛒 Kirana / Bakery</div>
+              <div class="text-xs text-slate-400 mt-1">Micro Retail (55% Base)</div>
+            </button>
+            <button onclick="loadScenario('clinic')" class="p-3 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-xl text-left transition hover:border-red-500/50 group">
+              <div class="text-sky-400 group-hover:text-sky-300 font-bold text-sm">🩺 Dental Clinic / CA</div>
+              <div class="text-xs text-slate-400 mt-1">Professional (25% Base)</div>
+            </button>
+            <button onclick="loadScenario('multisite')" class="p-3 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-xl text-left transition hover:border-red-500/50 group">
+              <div class="text-amber-400 group-hover:text-amber-300 font-bold text-sm">🏬 5-Store Retail Chain</div>
+              <div class="text-xs text-slate-400 mt-1">Multi-site (15% Base)</div>
+            </button>
+            <button onclick="loadScenario('factory')" class="p-3 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-xl text-left transition hover:border-red-500/50 group">
+              <div class="text-emerald-400 group-hover:text-emerald-300 font-bold text-sm">🏭 Auto Parts Factory</div>
+              <div class="text-xs text-slate-400 mt-1">Manufacturing (5% Base)</div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Discovery Questionnaire & Live Recommendation Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <!-- Input Form (5 Cols) -->
+        <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <h2 class="font-bold text-lg text-white flex items-center space-x-2">
+              <i data-lucide="building-2" class="w-5 h-5 text-red-500"></i>
+              <span>Business Profile</span>
+            </h2>
+            <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Step 1 of 4</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Business Name</label>
+            <input id="input-biz-name" type="text" value="Saffron Bakers" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Business Type</label>
+              <input id="input-biz-type" type="text" value="Bakery & Confectionery" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Customer Segment</label>
+              <select id="input-segment" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+                <option value="Micro retail & services">Micro retail & services</option>
+                <option value="Professional offices">Professional offices</option>
+                <option value="Small multi-site businesses">Small multi-site businesses</option>
+                <option value="Small manufacturers">Small manufacturers</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">City Tier</label>
+              <select id="input-tier" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+                <option value="1">Tier 1</option>
+                <option value="2" selected>Tier 2</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Employees</label>
+              <input id="input-emp" type="number" value="3" min="1" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Locations</label>
+              <input id="input-sites" type="number" value="1" min="1" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Has GSTIN?</label>
+              <select id="input-has-gst" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+                <option value="Y" selected>Yes (Active GSTIN)</option>
+                <option value="N">No (Exempt / Micro)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Current Monthly Spend</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2 text-slate-400 text-sm">₹</span>
+                <input id="input-spend" type="number" value="1350" class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+              </div>
+            </div>
+          </div>
+
+          <button onclick="requestAdvisorBundle()" class="w-full mt-2 bg-gradient-to-r from-brand-red to-red-600 hover:from-red-600 hover:to-brand-red text-white font-bold py-3 rounded-xl shadow-lg shadow-red-500/25 transition flex items-center justify-center space-x-2">
+            <i data-lucide="zap" class="w-4 h-4"></i>
+            <span>Get Tailored Bundle & Quote</span>
+          </button>
+        </div>
+
+        <!-- Output Recommendation Card (7 Cols) -->
+        <div class="lg:col-span-7 space-y-6">
+          <div id="advisor-result-card" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <!-- Header Status -->
+            <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-red-400">AI Advisor Recommendation</span>
+                <h3 id="rec-biz-title" class="text-xl font-bold text-white mt-0.5">Saffron Bakers</h3>
+              </div>
+              <div class="text-right">
+                <span class="text-xs text-slate-400 block">Single Monthly Bill</span>
+                <span id="rec-monthly-total" class="text-2xl font-black text-emerald-400">₹2,620</span>
+                <span class="text-xs text-slate-400">/month</span>
+              </div>
+            </div>
+
+            <!-- Plain-Language AI Narrative -->
+            <div class="mt-4 p-4 rounded-xl bg-slate-800/70 border border-slate-700/80 flex items-start space-x-3">
+              <div class="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center shrink-0 mt-0.5">
+                <i data-lucide="bot" class="w-4 h-4"></i>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-300">Why this bundle fits your business:</span>
+                  <button onclick="speakNarrative()" class="text-xs text-sky-400 hover:text-sky-300 flex items-center space-x-1">
+                    <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+                    <span>Read aloud</span>
+                  </button>
+                </div>
+                <p id="rec-narrative" class="text-xs lg:text-sm text-slate-200 mt-1 leading-relaxed">
+                  Tailored for your bakery with 1 store and 3 staff. We bundled high-speed Biz Fibre 100 with Cloud POS & 2 Business Postpaid lines, giving you zero UPI payment drops and a single consolidated invoice.
+                </p>
+              </div>
+            </div>
+
+            <!-- Product Items Table -->
+            <div class="mt-5 overflow-x-auto custom-scrollbar">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-slate-800 text-slate-400 font-semibold uppercase">
+                    <th class="pb-2.5">Product</th>
+                    <th class="pb-2.5">Category</th>
+                    <th class="pb-2.5 text-center">Qty</th>
+                    <th class="pb-2.5 text-right">Monthly (₹)</th>
+                    <th class="pb-2.5 text-right">Install SLA</th>
+                  </tr>
+                </thead>
+                <tbody id="rec-items-tbody" class="divide-y divide-slate-800/60 text-slate-200">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Key Summary Specs -->
+            <div class="mt-6 pt-4 border-t border-slate-800 grid grid-cols-3 gap-4 text-center">
+              <div class="bg-slate-800/40 p-2.5 rounded-xl border border-slate-800">
+                <span class="text-xs text-slate-400 block">Upfront Setup Fee</span>
+                <span id="rec-setup-fee" class="text-sm font-bold text-white">₹0</span>
+              </div>
+              <div class="bg-slate-800/40 p-2.5 rounded-xl border border-slate-800">
+                <span class="text-xs text-slate-400 block">Activation SLA</span>
+                <span id="rec-sla-days" class="text-sm font-bold text-sky-400">3 Business Days</span>
+              </div>
+              <div class="bg-slate-800/40 p-2.5 rounded-xl border border-slate-800">
+                <span class="text-xs text-slate-400 block">Contract Term</span>
+                <span id="rec-contract-term" class="text-sm font-bold text-white">12 Months</span>
+              </div>
+            </div>
+
+            <!-- Action CTA -->
+            <div class="mt-6 flex items-center justify-end space-x-3">
+              <button onclick="switchTab('quote')" class="px-6 py-2.5 rounded-xl bg-brand-red hover:bg-red-600 text-white font-bold text-sm shadow-lg shadow-red-500/20 transition flex items-center space-x-2">
+                <span>Customize Add-ons & Quote</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 2: QUOTE & CHECKOUT (TRANSPARENT PRICING & ADD-ONS) -->
+    <!-- ===================================================================== -->
+    <section id="view-quote" class="tab-view hidden space-y-8">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-slate-800 gap-4">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-red-400">Step 2 of 4 · Instant Quote</span>
+            <h2 class="text-xl lg:text-2xl font-bold text-white mt-0.5">Transparent Self-Serve Quote Builder</h2>
+            <p class="text-xs text-slate-400">Add or remove products with live pricing recalculation and automated catalogue rule validation.</p>
+          </div>
+          <div class="bg-slate-800/90 p-4 rounded-xl border border-slate-700/80 flex items-center space-x-6">
+            <div>
+              <span class="text-xs text-slate-400 block">Consolidated Monthly</span>
+              <span id="quote-total-monthly" class="text-2xl font-black text-emerald-400">₹2,620</span>
+            </div>
+            <div class="border-l border-slate-700 pl-6">
+              <span class="text-xs text-slate-400 block">One-time Setup</span>
+              <span id="quote-total-setup" class="text-xl font-bold text-white">₹2,500</span>
+            </div>
+            <div class="border-l border-slate-700 pl-6">
+              <span class="text-xs text-slate-400 block">Install SLA</span>
+              <span id="quote-total-sla" class="text-xl font-bold text-sky-400">5 Days</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dependency & Catalogue Rule Warning Box -->
+        <div id="quote-warning-box" class="hidden mt-4 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center space-x-2">
+          <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
+          <span id="quote-warning-text">Catalogue dependency note: Selected products require base broadband link.</span>
+        </div>
+
+        <!-- Modular Product & Add-on Toggles -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="quote-products-grid">
+          <!-- Dynamically filled with products & add-on counters -->
+        </div>
+
+        <!-- Acceptance Footer -->
+        <div class="mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="text-xs text-slate-400 flex items-center space-x-2">
+            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+            <span>No hidden charges · No paper contracts · All taxes calculated at checkout</span>
+          </div>
+          <div class="flex items-center space-x-3 w-full sm:w-auto">
+            <button onclick="switchTab('advisor')" class="px-4 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 text-sm font-semibold transition">Back</button>
+            <button onclick="acceptQuoteAndProceed()" class="flex-1 sm:flex-initial px-6 py-2.5 rounded-xl bg-brand-red hover:bg-red-600 text-white font-bold text-sm shadow-lg shadow-red-500/25 transition flex items-center justify-center space-x-2">
+              <span>Accept Quote & Start Instant KYC</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 3: SMART INSTANT KYC (DPDP COMPLIANCE & OCR VERIFIER) -->
+    <!-- ===================================================================== -->
+    <section id="view-kyc" class="tab-view hidden space-y-8">
+      <!-- DPDP Act Consent Card -->
+      <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex items-start space-x-3.5">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0">
+            <i data-lucide="lock" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h3 class="font-bold text-white text-sm lg:text-base">DPDP Act, 2023 Digital Consent Active</h3>
+              <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold">Purpose Limitation</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Data collected strictly for telecom connection verification. All identifiers masked in UI/logs. Documents deleted after 30-day statutory audit window.
+            </p>
+          </div>
+        </div>
+        <button onclick="showConsentModal()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-300 transition shrink-0">
+          View Privacy Terms
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <!-- Verification Input (5 Cols) -->
+        <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <h3 class="font-bold text-lg text-white flex items-center space-x-2">
+              <i data-lucide="file-check-2" class="w-5 h-5 text-red-500"></i>
+              <span>Smart Document Auditor</span>
+            </h3>
+            <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Step 3 of 4</span>
+          </div>
+
+          <!-- Quick Specimen Selector for Live Hackathon Demos -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+              <span>Select Specimen Applicant (K01–K12)</span>
+              <span class="text-[10px] text-red-400">Live Hackathon Test Suite</span>
+            </label>
+            <select id="specimen-select" onchange="onSpecimenSelectChange()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-red-500">
+              <option value="K02">K02: Harmony Dental Care (Valid Active Pass)</option>
+              <option value="K01">K01: Vindhya Tours (Planted: Cancelled GSTIN + Expired Bill)</option>
+              <option value="K04">K04: Saffron Dental Care (Planted: GSTIN Checksum Error)</option>
+              <option value="K07">K07: Neelgiri Physio Clinic (Planted: 8-digit Udyam Error)</option>
+              <option value="K11">K11: Trinity Bake House (Planted: Bill >90 Days Old)</option>
+              <option value="K12">K12: Star Electronics (Planted: 2024 Bill Expired)</option>
+              <option value="K03">K03: Ganesh Woodcraft (Valid Manufacturer Pass)</option>
+              <option value="K05">K05: Metro Retail (Valid Micro Non-GST Pass)</option>
+              <option value="K06">K06: Saffron Unisex Salon (Valid Pass)</option>
+              <option value="K08">K08: Green Leaf Legal (Valid Pass)</option>
+              <option value="K09">K09: Kaveri Insurance (Valid Pass)</option>
+              <option value="K10">K10: Kaveri Stays LLP (Valid Multi-site Pass)</option>
+            </select>
+          </div>
+
+          <!-- Or Custom Upload Dropzone -->
+          <div class="border-2 border-dashed border-slate-700 hover:border-slate-500 rounded-2xl p-5 text-center cursor-pointer transition" onclick="document.getElementById('kyc-file-input').click()">
+            <input id="kyc-file-input" type="file" accept="image/*" class="hidden" onchange="onCustomFileUploaded(event)">
+            <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
+            <span class="text-xs font-semibold text-slate-300 block">Or upload custom document (PNG / JPG)</span>
+            <span class="text-[11px] text-slate-500 mt-0.5 block">Automated OpenRouter Vision OCR extraction</span>
+          </div>
+
+          <!-- Extracted / Editable Document Fields -->
+          <div class="space-y-3 pt-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Business Name</label>
+              <input id="kyc-input-name" type="text" value="Harmony Dental Care" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">15-Digit GSTIN</label>
+              <input id="kyc-input-gstin" type="text" value="19E0GXH4115Y1ZL" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Udyam Registration Number</label>
+              <input id="kyc-input-udyam" type="text" value="UDYAM-WB-00-5053330" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                <span>Address Proof Utility Bill Date</span>
+                <span class="text-[10px] text-slate-400">Benchmark: 2026-07-15 (&le;90d)</span>
+              </label>
+              <input id="kyc-input-date" type="date" value="2026-05-22" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+          </div>
+
+          <button onclick="runAuditVerification()" class="w-full bg-gradient-to-r from-brand-red to-red-600 hover:from-red-600 hover:to-brand-red text-white font-bold py-3 rounded-xl shadow-lg shadow-red-500/25 transition flex items-center justify-center space-x-2">
+            <i data-lucide="check-circle" class="w-4 h-4"></i>
+            <span>Run Instant Smart KYC Audit</span>
+          </button>
+        </div>
+
+        <!-- Audit Results Card (7 Cols) -->
+        <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+          <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Audit Verification Outcome</span>
+              <h3 id="kyc-result-title" class="text-xl font-bold text-white mt-0.5">Applicant: Harmony Dental Care</h3>
+            </div>
+            <div id="kyc-overall-badge-container">
+              <span class="px-3.5 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                APPROVED
+              </span>
+            </div>
+          </div>
+
+          <!-- Component Verification Breakdown -->
+          <div id="kyc-checks-list" class="space-y-3">
+            <!-- Dynamic KYC audit items inserted here -->
+          </div>
+
+          <!-- Data Minimization & Privacy Protection Note -->
+          <div class="p-4 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs space-y-1.5">
+            <div class="flex items-center space-x-2 text-slate-300 font-bold">
+              <i data-lucide="shield" class="w-4 h-4 text-emerald-400"></i>
+              <span>DPDP Privacy Protocol Enforcement</span>
+            </div>
+            <p class="text-slate-400 leading-relaxed">
+              All tax and identity tokens displayed above have been masked according to Section 8 of the Digital Personal Data Protection Act, 2023. No raw Aadhaar or PAN copies stored on edge cache.
+            </p>
+          </div>
+
+          <!-- Proceed Button -->
+          <div class="pt-4 border-t border-slate-800 flex items-center justify-end space-x-3">
+            <button onclick="switchTab('tracker')" id="btn-proceed-tracker" class="px-6 py-2.5 rounded-xl bg-brand-red hover:bg-red-600 text-white font-bold text-sm shadow-lg shadow-red-500/20 transition flex items-center space-x-2">
+              <span>Confirm & Dispatch Activation Order</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 4: ORDER & ACTIVATION TRACKER -->
+    <!-- ===================================================================== -->
+    <section id="view-tracker" class="tab-view hidden space-y-8">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 lg:p-8 shadow-xl space-y-8">
+        <!-- Order Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-800 gap-4">
+          <div>
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-semibold mb-2">
+              <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
+              <span>Live Order Tracker Active</span>
+            </div>
+            <h2 class="text-2xl font-black text-white">Order #UDYAM-2026-8942</h2>
+            <p class="text-xs text-slate-400 mt-1">Customer: <strong class="text-slate-200">Saffron Bakers</strong> · Plan: <strong class="text-slate-200">Biz Fibre 100 + Cloud POS + 2x Mobile SIMs</strong></p>
+          </div>
+
+          <!-- Countdown SLA Widget -->
+          <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-black text-lg">
+              2d
+            </div>
+            <div>
+              <span class="text-xs text-slate-400 block">Guaranteed Activation</span>
+              <span class="text-sm font-bold text-white">July 18, 2026 (Within 48h)</span>
+              <span class="text-[11px] text-emerald-400 block mt-0.5">✓ Ahead of 5-day SLA</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5-Stage Visual Progress Timeline -->
+        <div>
+          <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-6">Milestone Progress</h3>
+          <div class="relative">
+            <!-- Connecting line -->
+            <div class="hidden md:block absolute top-1/2 left-0 right-0 h-1 bg-slate-800 -translate-y-1/2 z-0"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 relative z-10">
+              <!-- Stage 1 -->
+              <div class="bg-slate-800/90 border border-emerald-500/50 p-4 rounded-xl text-center relative">
+                <div class="w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-xs flex items-center justify-center mx-auto mb-2 shadow-lg shadow-emerald-500/30">✓</div>
+                <div class="text-xs font-bold text-white">1. Order Placed</div>
+                <div class="text-[11px] text-emerald-400 mt-0.5">16 Jul, 10:30 AM</div>
+                <div class="text-[10px] text-slate-400 mt-1">Quote accepted digitally</div>
+              </div>
+              <!-- Stage 2 -->
+              <div class="bg-slate-800/90 border border-emerald-500/50 p-4 rounded-xl text-center relative">
+                <div class="w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-xs flex items-center justify-center mx-auto mb-2 shadow-lg shadow-emerald-500/30">✓</div>
+                <div class="text-xs font-bold text-white">2. Smart KYC</div>
+                <div class="text-[11px] text-emerald-400 mt-0.5">16 Jul, 10:32 AM</div>
+                <div class="text-[10px] text-slate-400 mt-1">Instant GST & Udyam pass</div>
+              </div>
+              <!-- Stage 3 -->
+              <div class="bg-slate-800/90 border border-emerald-500/50 p-4 rounded-xl text-center relative">
+                <div class="w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-xs flex items-center justify-center mx-auto mb-2 shadow-lg shadow-emerald-500/30">✓</div>
+                <div class="text-xs font-bold text-white">3. Feasibility</div>
+                <div class="text-[11px] text-emerald-400 mt-0.5">16 Jul, 02:15 PM</div>
+                <div class="text-[10px] text-slate-400 mt-1">Port 4 reserved (65m)</div>
+              </div>
+              <!-- Stage 4 (Active / In Progress) -->
+              <div class="bg-slate-800/90 border-2 border-sky-500 p-4 rounded-xl text-center relative shadow-lg shadow-sky-500/20">
+                <div class="w-8 h-8 rounded-full bg-sky-500 text-slate-950 font-black text-xs flex items-center justify-center mx-auto mb-2 animate-bounce">4</div>
+                <div class="text-xs font-bold text-sky-400">4. Dispatched</div>
+                <div class="text-[11px] text-sky-300 mt-0.5">Today by 4:00 PM</div>
+                <div class="text-[10px] text-slate-400 mt-1">Technician en route</div>
+              </div>
+              <!-- Stage 5 -->
+              <div class="bg-slate-800/40 border border-slate-700/60 p-4 rounded-xl text-center relative opacity-75">
+                <div class="w-8 h-8 rounded-full bg-slate-700 text-slate-400 font-bold text-xs flex items-center justify-center mx-auto mb-2">5</div>
+                <div class="text-xs font-semibold text-slate-400">5. Activation</div>
+                <div class="text-[11px] text-slate-500 mt-0.5">Tomorrow morning</div>
+                <div class="text-[10px] text-slate-500 mt-1">Commercial go-live</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assigned Technician & Direct Self-Serve Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800">
+          <!-- Engineer Profile Card -->
+          <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-5 flex items-center justify-between">
+            <div class="flex items-center space-x-3.5">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold text-white text-base">
+                RK
+              </div>
+              <div>
+                <span class="text-xs text-sky-400 font-semibold block">Assigned Accel Field Engineer</span>
+                <h4 class="font-bold text-white text-sm">Rajesh Kumar (Badge #ENG-4821)</h4>
+                <div class="flex items-center space-x-2 text-xs text-slate-400 mt-0.5">
+                  <span class="text-amber-400">★ 4.9 Rating</span>
+                  <span>·</span>
+                  <span>Broadband & Cloud Specialist</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Installation OTP</span>
+              <span class="text-lg font-mono font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">7482</span>
+            </div>
+          </div>
+
+          <!-- Impact Metric Callout: Why This Eliminates 3 Calls & Slashes Churn -->
+          <div class="bg-gradient-to-br from-red-950/40 to-slate-900 border border-red-500/30 rounded-xl p-5 flex items-start space-x-3.5">
+            <div class="w-10 h-10 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center shrink-0">
+              <i data-lucide="phone-off" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-white">Status Follow-up Call Eliminator</h4>
+              <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+                In historical data, customers made <strong>3.0 follow-up calls</strong> chasing installation status, causing severe 6-month churn (28%). Live milestone tracking eliminates calls entirely, boosting NPS from <strong>6.8 to 9.2</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 5: SALES INTELLIGENCE & EXPECTED VALUE (EV) ENGINE (STRETCH GOAL) -->
+    <!-- ===================================================================== -->
+    <section id="view-backoffice" class="tab-view hidden space-y-8">
+      <!-- Funnel Metrics Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <span class="text-xs text-slate-400 block">Baseline Funnel Conversion</span>
+          <span class="text-2xl font-black text-red-400 mt-1 block">7.36%</span>
+          <span class="text-[11px] text-slate-500">368 activations / 5,000 leads</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <span class="text-xs text-slate-400 block">Projected Digital Conversion</span>
+          <span class="text-2xl font-black text-emerald-400 mt-1 block">22.50%</span>
+          <span class="text-[11px] text-emerald-400/80">3.05× conversion multiplier</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <span class="text-xs text-slate-400 block">Blended Acquisition Cost (CAC)</span>
+          <div class="flex items-baseline space-x-2 mt-1">
+            <span class="text-2xl font-black text-white">₹3,800</span>
+            <span class="text-xs text-slate-500 line-through">₹15,000</span>
+          </div>
+          <span class="text-[11px] text-sky-400">74.6% reduction via self-serve</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <span class="text-xs text-slate-400 block">Avg Lead-to-Activation Time</span>
+          <div class="flex items-baseline space-x-2 mt-1">
+            <span class="text-2xl font-black text-sky-400">2.5 Days</span>
+            <span class="text-xs text-slate-500 line-through">17.6 Days</span>
+          </div>
+          <span class="text-[11px] text-slate-400">Near zero paperwork lag</span>
+        </div>
+      </div>
+
+      <!-- ML Omnichannel Router Table -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800 gap-3">
+          <div>
+            <h3 class="font-bold text-lg text-white flex items-center space-x-2">
+              <i data-lucide="cpu" class="w-5 h-5 text-emerald-400"></i>
+              <span>ML Propensity & Expected Annual Value (EV) Lead Router</span>
+            </h3>
+            <p class="text-xs text-slate-400">Ensemble ML scores 5,000 leads and intelligently routes high-value VIPs to field reps while keeping micro-leads 100% digital.</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <select id="backoffice-segment-filter" onchange="loadBackofficeLeads()" class="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-xl px-3 py-2">
+              <option value="All">All Customer Segments</option>
+              <option value="Micro retail & services">Micro retail & services</option>
+              <option value="Professional offices">Professional offices</option>
+              <option value="Small multi-site businesses">Small multi-site businesses</option>
+              <option value="Small manufacturers">Small manufacturers</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Leads Table -->
+        <div class="overflow-x-auto custom-scrollbar max-h-96">
+          <table class="w-full text-left text-xs">
+            <thead class="sticky top-0 bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold uppercase">
+              <tr>
+                <th class="py-2.5 px-3">Lead ID</th>
+                <th class="py-2.5 px-3">Business</th>
+                <th class="py-2.5 px-3">Segment</th>
+                <th class="py-2.5 px-3">Propensity</th>
+                <th class="py-2.5 px-3">Predicted MRR</th>
+                <th class="py-2.5 px-3">Expected Value (EV)</th>
+                <th class="py-2.5 px-3">Automated Routing</th>
+              </tr>
+            </thead>
+            <tbody id="backoffice-leads-tbody" class="divide-y divide-slate-800/60 text-slate-300">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- CONSENT MODAL -->
+  <div id="consent-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h4 class="font-bold text-white text-base flex items-center space-x-2">
+          <i data-lucide="shield-check" class="w-5 h-5 text-emerald-400"></i>
+          <span>DPDP Act, 2023 Consent Notice</span>
+        </h4>
+        <button onclick="hideConsentModal()" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+      <div class="text-xs text-slate-300 space-y-2.5 leading-relaxed">
+        <p><strong>1. Purpose of Processing:</strong> Accel Business collects business credentials (GSTIN, Udyam, Utility bills) solely for verifying telecom subscriber identity and network feasibility under DoT licensing requirements.</p>
+        <p><strong>2. Data Minimization:</strong> Micro-retail applicants without GST are verified via light-touch utility verification without forcing unnecessary tax filings.</p>
+        <p><strong>3. Masking & Protection:</strong> All tax tokens and signatory credentials are encrypted with AES-256 and masked in user interfaces (`37XXXXXXXXX1ZS`).</p>
+        <p><strong>4. Retention Limit:</strong> Specimen images are expunged from hot storage 30 days post commercial service activation.</p>
+      </div>
+      <div class="pt-3 border-t border-slate-800 text-right">
+        <button onclick="hideConsentModal()" class="px-5 py-2 rounded-xl bg-brand-red text-white text-xs font-bold">I Acknowledge</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="bg-slate-900 border-t border-slate-800 py-4 px-8 text-center text-xs text-slate-500">
+    Accel Business · Project Udyam Digital · YTL Hackathon 2026 Enterprise Track A Prototype
+  </footer>
+
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
+

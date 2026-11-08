@@ -1,0 +1,20 @@
+# Environment secrets
+.env
+.env.local
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Jupyter & IDE
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# Distribution & builds
+build/
+dist/
+*.egg-info/
+
